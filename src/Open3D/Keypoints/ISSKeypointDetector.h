@@ -5,13 +5,12 @@
 #pragma once
 
 #include <memory>
+
+#include "Open3D/Geometry/PointCloud.h"
+
 namespace open3d {
-
-namespace geometry {
-class PointCloud;
-}
-
 namespace keypoints {
+
 class ISSKeypointDetector;
 
 /// Function to compute ISS keypoints for a point cloud.
