@@ -9,6 +9,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
+#include <cmath>
 #include <memory>
 #include <vector>
 
@@ -17,6 +18,17 @@
 
 namespace open3d {
 namespace keypoints {
+
+void ISSKeypointDetector::ComputeResolution(const geometry::PointCloud& cloud) {
+    std::vector<int> indices(2);
+    std::vector<double> distances(2);
+    for (const auto& point : cloud.points_) {
+        if (kdtree_.SearchKNN(point, 2, indices, distances) != 0) {
+            resolution_ += std::sqrt(distances[1]);
+        }
+    }
+    resolution_ /= cloud.points_.size();
+}
 
 Eigen::Matrix3d ISSKeypointDetector::ComputeScatterMatrix(
         const Eigen::Vector3d& p, const geometry::PointCloud& pcd) const {
@@ -32,7 +44,6 @@ Eigen::Matrix3d ISSKeypointDetector::ComputeScatterMatrix(
     for (const auto& n_idx : indices) {
         up += pcd.points_[n_idx];
     }
-    up /= nb_neighbors;
 
     // Compute the scatter matrix
     Eigen::Matrix3d cov = Eigen::Matrix3d::Zero();
@@ -50,6 +61,10 @@ std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints(
     }
 
     kdtree_.SetGeometry(pcd);
+    ComputeResolution(pcd);
+    // TODO: 6 and 4 are magic numbers
+    salient_radius_ = 8 * resolution_;
+    const double non_max_radius = 4 * resolution_;
 
     const auto& points = pcd.points_;
     std::vector<double> third_eigen_values(points.size());
@@ -69,33 +84,27 @@ std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints(
         }
     }
 
-    std::vector<bool> feat_max(points.size());
+    // TODO: Extract this from here
+    std::vector<Eigen::Vector3d> keypoints;
+    keypoints.reserve(points.size());
     for (size_t i = 0; i < points.size(); i++) {
         if (third_eigen_values[i] > 0.0) {
             std::vector<int> nn_indices;
             std::vector<double> dist;
-            int nb_neighbors = kdtree_.SearchRadius(points[i], salient_radius_,
+            int nb_neighbors = kdtree_.SearchRadius(points[i], non_max_radius,
                                                     nn_indices, dist);
 
             if (nb_neighbors >= min_neighbors_) {
                 bool is_max = true;
-                for (int j = 0; j < nb_neighbors; j++) {
-                    if (third_eigen_values[i] <
-                        third_eigen_values[nn_indices[j]]) {
+                for (const auto& n_idx : nn_indices) {
+                    if (third_eigen_values[i] < third_eigen_values[n_idx]) {
                         is_max = false;
                     }
                 }
                 if (is_max) {
-                    feat_max[i] = true;
+                    keypoints.emplace_back(points[i]);
                 }
             }
-        }
-    }
-
-    std::vector<Eigen::Vector3d> keypoints(points.size());
-    for (size_t i = 0; i < points.size(); i++) {
-        if (feat_max[i]) {
-            keypoints.emplace_back(points[i]);
         }
     }
 

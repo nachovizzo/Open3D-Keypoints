@@ -1,6 +1,7 @@
 build/
 data/
 **/*.ply
+**/*.pcd
 compile_commands.json
 
 ### C++ ###
