@@ -22,8 +22,9 @@ namespace keypoints {
 void ISSKeypointDetector::ComputeResolution(const geometry::PointCloud& cloud) {
     std::vector<int> indices(2);
     std::vector<double> distances(2);
-    for (const auto& point : cloud.points_) {
-        if (kdtree_.SearchKNN(point, 2, indices, distances) != 0) {
+#pragma omp parallel for reduction(+ : resolution_)
+    for (size_t i = 0; i < cloud.points_.size(); i++) {
+        if (kdtree_.SearchKNN(cloud.points_[i], 2, indices, distances) != 0) {
             resolution_ += std::sqrt(distances[1]);
         }
     }
@@ -68,6 +69,7 @@ std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints(
 
     const auto& points = pcd.points_;
     std::vector<double> third_eigen_values(points.size());
+#pragma omp parallel for shared(third_eigen_values)
     for (size_t i = 0; i < points.size(); i++) {
         Eigen::Matrix3d cov = ComputeScatterMatrix(points[i], pcd);
         if (cov.isZero()) {
@@ -87,6 +89,7 @@ std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints(
     // TODO: Extract this from here
     std::vector<Eigen::Vector3d> keypoints;
     keypoints.reserve(points.size());
+#pragma omp parallel for shared(keypoints)
     for (size_t i = 0; i < points.size(); i++) {
         if (third_eigen_values[i] > 0.0) {
             std::vector<int> nn_indices;
