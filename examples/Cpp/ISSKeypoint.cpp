@@ -40,6 +40,5 @@ int main(int argc, char *argv[]) {
     iss_keypoints->PaintUniformColor(Eigen::Vector3d(1.0, 0.75, 0.0));
     visualization::DrawGeometries({iss_keypoints}, "ISS", 1600, 900);
 
-    io::WritePointCloudToPCD("Bunny.pcd", *cloud_ptr);
     return 0;
 }
