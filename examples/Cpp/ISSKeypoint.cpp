@@ -28,10 +28,9 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    utility::LogInfo("Successfully read {}\n", filename);
-    cloud_ptr->NormalizeNormals();
-
-    auto iss_keypoints = keypoints::ComputeISSKeypoints(*cloud_ptr);
+    cloud_ptr->EstimateNormals();
+    keypoints::ISSKeypointDetector detector;
+    auto iss_keypoints = detector.ComputeKeypoints(*cloud_ptr);
     visualization::DrawGeometries({iss_keypoints}, "PointCloud", 1600, 900);
 
     return 0;

@@ -18,5 +18,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 link_directories(${Open3D_LIBRARY_DIRS})
 include_directories(${Open3D_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src/)
 
+add_subdirectory(examples)
 add_subdirectory(src)
 add_subdirectory(tests)
