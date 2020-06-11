@@ -16,29 +16,48 @@ int main(int argc, char *argv[]) {
     using namespace open3d;
 
     utility::SetVerbosityLevel(utility::VerbosityLevel::Debug);
-    if (argc < 2) {
+    if (argc < 3) {
         utility::LogInfo("Open3D {}", OPEN3D_VERSION);
         utility::LogInfo("Usage:");
-        utility::LogInfo("\t> {} [filename]\n", argv[0]);
+        utility::LogInfo("\t> {} [mesh|pointcloud] [filename]\n", argv[0]);
         return 0;
     }
 
-    const std::string filename(argv[1]);
-    auto cloud_ptr = std::make_shared<geometry::PointCloud>();
-    if (!io::ReadPointCloud(filename, *cloud_ptr)) {
-        utility::LogWarning("Failed to read {}\n\n", filename);
-        return 1;
+    const std::string option(argv[1]);
+    const std::string filename(argv[2]);
+    auto cloud = std::make_shared<geometry::PointCloud>();
+    auto mesh = std::make_shared<geometry::TriangleMesh>();
+    if (option == "mesh") {
+        if (!io::ReadTriangleMesh(filename, *mesh)) {
+            utility::LogWarning("Failed to read {}", filename);
+            return 1;
+        }
+        cloud = mesh->SamplePointsUniformly(mesh->vertices_.size());
+    } else if (option == "pointcloud") {
+        if (!io::ReadPointCloud(filename, *cloud)) {
+            utility::LogWarning("Failed to read {}\n\n", filename);
+            return 1;
+        }
+    } else {
+        utility::LogError("Options {} not supported\n", option);
     }
 
-    cloud_ptr->EstimateNormals();
+    cloud->EstimateNormals();
     keypoints::ISSKeypointDetector detector;
-    auto iss_keypoints = detector.ComputeKeypoints(*cloud_ptr);
+    auto iss_keypoints = detector.ComputeKeypoints(*cloud);
     utility::LogInfo("Detected {} keypoints", iss_keypoints->points_.size());
 
     // Visualize the results
-    cloud_ptr->PaintUniformColor(Eigen::Vector3d(0.5, 0.5, 0.5));
+    cloud->PaintUniformColor(Eigen::Vector3d(0.5, 0.5, 0.5));
     iss_keypoints->PaintUniformColor(Eigen::Vector3d(1.0, 0.75, 0.0));
-    visualization::DrawGeometries({iss_keypoints}, "ISS", 1600, 900);
+    if (option == "mesh") {
+        mesh->PaintUniformColor(Eigen::Vector3d(0.5, 0.5, 0.5));
+        visualization::DrawGeometries({mesh, iss_keypoints}, "ISS", 1600, 900);
+    } else {
+        mesh->ComputeVertexNormals();
+        mesh->ComputeTriangleNormals();
+        visualization::DrawGeometries({iss_keypoints}, "ISS", 1600, 900);
+    }
 
     return 0;
 }
