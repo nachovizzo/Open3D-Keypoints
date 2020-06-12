@@ -52,8 +52,10 @@ int main(int argc, char *argv[]) {
         detector.salient_radius_ = std::strtod(argv[3], 0);
         detector.non_max_radius_ = std::strtod(argv[4], 0);
     }
-    // Compute the ISS Keypoints
+    utility::LogDebug("salient_radius = {}, non_max_radius = {}",
+                      detector.salient_radius_, detector.non_max_radius_);
 
+    // Compute the ISS Keypoints
     auto iss_keypoints = std::make_shared<geometry::PointCloud>();
     {
         utility::ScopeTimer timer("ISS estimation");
