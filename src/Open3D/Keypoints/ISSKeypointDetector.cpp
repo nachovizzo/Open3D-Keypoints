@@ -79,7 +79,6 @@ std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints() {
         }
     }
 
-    // TODO: Extract this from here
     std::vector<Eigen::Vector3d> keypoints;
     keypoints.reserve(points.size());
 #pragma omp parallel for shared(keypoints)
