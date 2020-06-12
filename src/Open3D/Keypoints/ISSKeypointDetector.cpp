@@ -60,10 +60,6 @@ Eigen::Matrix3d ISSKeypointDetector::ComputeScatterMatrix(
 }
 
 std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints() {
-    if (!cloud_->HasNormals()) {
-        utility::LogError("[ComputeKeypoints] cloud_ has no normals");
-    }
-
     const auto& points = cloud_->points_;
     std::vector<double> third_eigen_values(points.size());
 #pragma omp parallel for shared(third_eigen_values)

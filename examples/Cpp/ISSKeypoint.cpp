@@ -41,7 +41,6 @@ int main(int argc, char *argv[]) {
         utility::LogError("Options {} not supported\n", option);
     }
 
-    cloud->EstimateNormals();
     keypoints::ISSKeypointDetector detector(cloud);
     if (argc == 3) {
         utility::LogInfo("Using default parameters");
