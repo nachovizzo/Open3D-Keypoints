@@ -41,24 +41,21 @@ int main(int argc, char *argv[]) {
         utility::LogError("Options {} not supported\n", option);
     }
 
-    /* if (argc == 3) { */
-    /*     utility::LogInfo("Using default parameters"); */
-    /* } else { */
-    /*     detector.salient_radius_ = std::strtod(argv[3], 0); */
-    /*     detector.non_max_radius_ = std::strtod(argv[4], 0); */
-    /* } */
-
-    keypoints::ISSKeypointDetector detector(cloud);
-    utility::LogDebug("salient_radius = {}, non_max_radius = {}",
-                      detector.salient_radius_, detector.non_max_radius_);
-
     // Compute the ISS Keypoints
     auto iss_keypoints = std::make_shared<geometry::PointCloud>();
     {
-        utility::ScopeTimer timer("ISS estimation");
-        iss_keypoints = detector.ComputeKeypoints();
+        utility::ScopeTimer timer("ISS Keypoints estimation");
+        iss_keypoints = keypoints::ComputeISSKeypoints(cloud);
         utility::LogInfo("Detected {} keypoints",
                          iss_keypoints->points_.size());
+    }
+    {
+        utility::ScopeTimer timer("[class] ISS Keypoints estimation");
+        keypoints::ISSKeypointDetector detector(cloud);
+        detector.gamma_21_ = 0.975;
+        auto c_iss_keypoints = detector.ComputeKeypoints();
+        utility::LogInfo("Detected {} keypoints",
+                         c_iss_keypoints->points_.size());
     }
     // Visualize the results
     cloud->PaintUniformColor(Eigen::Vector3d(0.5, 0.5, 0.5));

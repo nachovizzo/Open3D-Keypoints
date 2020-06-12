@@ -15,7 +15,7 @@ namespace keypoints {
 
 class ISSKeypointDetector {
 public:
-    ISSKeypointDetector(
+    explicit ISSKeypointDetector(
             const std::shared_ptr<geometry::PointCloud>& cloud,
             double salient_radius = 0.0,
             double non_max_radius = 0.0)
@@ -64,5 +64,9 @@ public:
     int min_neighbors_ = 5;
 };
 
+std::shared_ptr<geometry::PointCloud> ComputeISSKeypoints(
+        const std::shared_ptr<geometry::PointCloud>& input,
+        double salient_radius = 0.0,
+        double non_max_radius = 0.0);
 }  // namespace keypoints
 }  // namespace open3d

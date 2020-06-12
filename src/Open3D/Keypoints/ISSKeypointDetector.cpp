@@ -111,5 +111,13 @@ std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints() {
     return std::make_shared<geometry::PointCloud>(keypoints);
 }
 
+std::shared_ptr<geometry::PointCloud> ComputeISSKeypoints(
+        const std::shared_ptr<geometry::PointCloud>& input,
+        double salient_radius /* = 0.0 */,
+        double non_max_radius /* = 0.0 */) {
+    ISSKeypointDetector detector(input, salient_radius, non_max_radius);
+    return detector.ComputeKeypoints();
+}
+
 }  // namespace keypoints
 }  // namespace open3d
