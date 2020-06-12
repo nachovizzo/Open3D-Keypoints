@@ -4,17 +4,15 @@
 // Copyright (c) 2020 Ignacio Vizzo, all rights reserved
 #include "Open3D/Keypoints/ISSKeypointDetector.h"
 
-#include <Open3D/Geometry/KDTreeFlann.h>
-#include <Open3D/Utility/Console.h>
-
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 #include <cmath>
 #include <memory>
 #include <vector>
 
-#include "Eigen/src/Core/Matrix.h"
+#include "Open3D/Geometry/KDTreeFlann.h"
 #include "Open3D/Geometry/PointCloud.h"
+#include "Open3D/Utility/Console.h"
 
 namespace open3d {
 namespace keypoints {
