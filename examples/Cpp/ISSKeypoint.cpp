@@ -8,8 +8,10 @@
 #include <Open3D/Open3D.h>
 
 #include <Eigen/Core>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 
 int main(int argc, char *argv[]) {
@@ -19,7 +21,7 @@ int main(int argc, char *argv[]) {
     if (argc < 3) {
         utility::LogInfo("Open3D {}", OPEN3D_VERSION);
         utility::LogInfo("Usage:");
-        utility::LogInfo("\t> {} [mesh|pointcloud] [filename]\n", argv[0]);
+        utility::LogInfo("\t> {} [mesh|pointcloud] [filename] ...\n", argv[0]);
         return 0;
     }
 
@@ -44,9 +46,15 @@ int main(int argc, char *argv[]) {
 
     cloud->EstimateNormals();
     keypoints::ISSKeypointDetector detector(cloud);
-    double resolution = detector.ModelResolution();
-    detector.salient_radius_ = 6 * resolution;
-    detector.non_max_radius_ = 4 * resolution;
+    if (argc == 3) {
+        utility::LogInfo("Using default parameters");
+        double resolution = detector.ModelResolution();
+        detector.salient_radius_ = 6 * resolution;
+        detector.non_max_radius_ = 4 * resolution;
+    } else {
+        detector.salient_radius_ = std::strtod(argv[3], 0);
+        detector.non_max_radius_ = std::strtod(argv[4], 0);
+    }
     auto iss_keypoints = detector.ComputeKeypoints();
     utility::LogInfo("Detected {} keypoints", iss_keypoints->points_.size());
 
