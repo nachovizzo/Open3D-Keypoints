@@ -16,27 +16,21 @@ namespace keypoints {
 class ISSKeypointDetector {
 public:
     explicit ISSKeypointDetector(
-            const std::shared_ptr<geometry::PointCloud>& cloud,
-            double salient_radius = 0.0,
-            double non_max_radius = 0.0)
-        : cloud_(cloud),
-          kdtree_(*cloud),
-          salient_radius_(salient_radius),
-          non_max_radius_(non_max_radius) {
-        if (salient_radius_ == 0.0 || non_max_radius_ == 0.0) {
-            const double resolution = ComputeModelResolution();
-            salient_radius_ = 6 * resolution;
-            non_max_radius_ = 4 * resolution;
-        }
-    }
+            const std::shared_ptr<geometry::PointCloud>& cloud)
+        : cloud_(cloud), kdtree_(*cloud) {}
 
     /// Function to compute ISS keypoints for a point cloud.
     std::shared_ptr<geometry::PointCloud> ComputeKeypoints();
 
-protected:
-    /// Compute the Model(PointCloud) resolution from the given data.
-    double ComputeModelResolution() const;
+    /// Compute the model resolution;
+    static double ComputeResolution(const geometry::PointCloud& cloud,
+                                    const geometry::KDTreeFlann& kdtree);
 
+    inline double ModelResolution() const {
+        return ComputeResolution(*cloud_, kdtree_);
+    }
+
+protected:
     /// Helper function to compute the scatter matrix for a a point in the input
     /// pointcloud
     Eigen::Matrix3d ComputeScatterMatrix(const Eigen::Vector3d& p) const;
@@ -63,25 +57,6 @@ public:
     /// non maxima suppression algorithm.
     int min_neighbors_ = 5;
 };
-
-/// Function to compute ISS keypoints for a point cloud.
-/// Input PointCloud where to extract the keypoints
-/// The radius of the spherical neighborhood used to compute the scatter
-/// matrix
-/// The non maxima suppression radius.
-/// The upper bound on the ratio between the second and the first
-/// eigenvalue returned by the EVD.
-/// The upper bound on the ratio between the third and the second
-/// eigenvalue returned by the EVD.
-/// Minimum number of neighbors that has to be found while applying the
-/// non maxima suppression algorithm.
-inline std::shared_ptr<geometry::PointCloud> ComputeISSKeypoints(
-        const std::shared_ptr<geometry::PointCloud>& input,
-        double salient_radius = 0.0,
-        double non_max_radius = 0.0) {
-    return ISSKeypointDetector(input, salient_radius, non_max_radius)
-            .ComputeKeypoints();
-}
 
 }  // namespace keypoints
 }  // namespace open3d
