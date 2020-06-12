@@ -3,15 +3,12 @@
 //
 // Copyright (c) 2020 Ignacio Vizzo, all rights reserved
 
-#include <Open3D/IO/ClassIO/PointCloudIO.h>
 #include <Open3D/Keypoints/ISSKeypointDetector.h>
 #include <Open3D/Open3D.h>
 
 #include <Eigen/Core>
 #include <cstdlib>
-#include <iostream>
 #include <memory>
-#include <sstream>
 #include <string>
 
 int main(int argc, char *argv[]) {
@@ -59,9 +56,14 @@ int main(int argc, char *argv[]) {
         non_max_radius = std::strtod(argv[4], 0);
     }
 
-    iss_keypoints = keypoints::ComputeISSKeypoints(*cloud, salient_radius,
-                                                   non_max_radius);
-    utility::LogInfo("Detected {} keypoints", iss_keypoints->points_.size());
+    // Compute the ISS Keypoints
+    {
+        utility::ScopeTimer timer("ISS estimation");
+        iss_keypoints = keypoints::ComputeISSKeypoints(*cloud, salient_radius,
+                                                       non_max_radius);
+        utility::LogInfo("Detected {} keypoints",
+                         iss_keypoints->points_.size());
+    }
 
     // Visualize the results
     cloud->PaintUniformColor(Eigen::Vector3d(0.5, 0.5, 0.5));
