@@ -45,17 +45,22 @@ int main(int argc, char *argv[]) {
     }
 
     cloud->EstimateNormals();
-    keypoints::ISSKeypointDetector detector(cloud);
+    double salient_radius = 0.0;
+    double non_max_radius = 0.0;
+    auto iss_keypoints = std::make_shared<geometry::PointCloud>();
     if (argc == 3) {
         utility::LogInfo("Using default parameters");
-        double resolution = detector.ModelResolution();
-        detector.salient_radius_ = 6 * resolution;
-        detector.non_max_radius_ = 4 * resolution;
+        geometry::KDTreeFlann kdtree(*cloud);
+        const double resolution = keypoints::ComputeResolution(*cloud, kdtree);
+        salient_radius = 6 * resolution;
+        non_max_radius = 4 * resolution;
     } else {
-        detector.salient_radius_ = std::strtod(argv[3], 0);
-        detector.non_max_radius_ = std::strtod(argv[4], 0);
+        salient_radius = std::strtod(argv[3], 0);
+        non_max_radius = std::strtod(argv[4], 0);
     }
-    auto iss_keypoints = detector.ComputeKeypoints();
+
+    iss_keypoints = keypoints::ComputeISSKeypoints(*cloud, salient_radius,
+                                                   non_max_radius);
     utility::LogInfo("Detected {} keypoints", iss_keypoints->points_.size());
 
     // Visualize the results

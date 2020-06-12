@@ -5,6 +5,7 @@
 #include "Open3D/Keypoints/ISSKeypointDetector.h"
 
 #include <Open3D/Geometry/KDTreeFlann.h>
+#include <Open3D/Geometry/PointCloud.h>
 #include <Open3D/Utility/Console.h>
 
 #include <Eigen/Core>
@@ -13,13 +14,40 @@
 #include <memory>
 #include <vector>
 
-#include "Eigen/src/Core/Matrix.h"
-#include "Open3D/Geometry/PointCloud.h"
-
 namespace open3d {
+namespace {
+using namespace geometry;
+Eigen::Matrix3d ComputeScatterMatrix(const Eigen::Vector3d& p,
+                                     const geometry::PointCloud& input,
+                                     const geometry::KDTreeFlann& kdtree,
+                                     double salient_radius,
+                                     int min_neighbors) {
+    std::vector<int> indices;
+    std::vector<double> dist;
+    int nb_neighbors = kdtree.SearchRadius(p, salient_radius, indices, dist);
+    if (nb_neighbors < min_neighbors) {
+        return {};
+    }
+
+    // sample mean vector
+    Eigen::Vector3d up = Eigen::Vector3d::Zero();
+    for (const auto& n_idx : indices) {
+        up += input.points_[n_idx];
+    }
+
+    // Compute the scatter matrix
+    Eigen::Matrix3d cov = Eigen::Matrix3d::Zero();
+    for (const auto& n_idx : indices) {
+        const auto& n_point = input.points_[n_idx];
+        cov += (n_point - up) * (n_point - up).transpose();
+    }
+    return cov;
+}
+}  // namespace
+
 namespace keypoints {
 
-double ISSKeypointDetector::ComputeResolution(
+double ComputeResolution(
         const geometry::PointCloud& cloud,
         const geometry::KDTreeFlann& kdtree) {
     std::vector<int> indices(2);
@@ -35,40 +63,20 @@ double ISSKeypointDetector::ComputeResolution(
     return resolution;
 }
 
-Eigen::Matrix3d ISSKeypointDetector::ComputeScatterMatrix(
-        const Eigen::Vector3d& p) const {
-    std::vector<int> indices;
-    std::vector<double> dist;
-    int nb_neighbors = kdtree_.SearchRadius(p, salient_radius_, indices, dist);
-    if (nb_neighbors < min_neighbors_) {
-        return {};
-    }
-
-    // sample mean vector
-    Eigen::Vector3d up = Eigen::Vector3d::Zero();
-    for (const auto& n_idx : indices) {
-        up += cloud_->points_[n_idx];
-    }
-
-    // Compute the scatter matrix
-    Eigen::Matrix3d cov = Eigen::Matrix3d::Zero();
-    for (const auto& n_idx : indices) {
-        const auto& n_point = cloud_->points_[n_idx];
-        cov += (n_point - up) * (n_point - up).transpose();
-    }
-    return cov;
-}
-
-std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints() {
-    if (!cloud_->HasNormals()) {
-        utility::LogError("[ComputeKeypoints] cloud_ has no normals");
-    }
-
-    const auto& points = cloud_->points_;
+std::shared_ptr<geometry::PointCloud> ComputeISSKeypoints(
+        const geometry::PointCloud& input,
+        double salient_radius,
+        double non_max_radius,
+        double gamma_21,
+        double gamma_32,
+        int min_neighbors) {
+    geometry::KDTreeFlann kdtree(input);
+    const auto& points = input.points_;
     std::vector<double> third_eigen_values(points.size());
 #pragma omp parallel for shared(third_eigen_values)
     for (size_t i = 0; i < points.size(); i++) {
-        Eigen::Matrix3d cov = ComputeScatterMatrix(points[i]);
+        Eigen::Matrix3d cov = ComputeScatterMatrix(
+                points[i], input, kdtree, salient_radius, min_neighbors);
         if (cov.isZero()) {
             continue;
         }
@@ -78,12 +86,11 @@ std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints() {
         const double& e2c = solver.eigenvalues()[1];
         const double& e3c = solver.eigenvalues()[0];
 
-        if ((e2c / e1c) < gamma_21_ && e3c / e2c < gamma_32_) {
+        if ((e2c / e1c) < gamma_21 && e3c / e2c < gamma_32) {
             third_eigen_values[i] = e3c;
         }
     }
 
-    // TODO: Extract this from here
     std::vector<Eigen::Vector3d> keypoints;
     keypoints.reserve(points.size());
 #pragma omp parallel for shared(keypoints)
@@ -91,10 +98,10 @@ std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints() {
         if (third_eigen_values[i] > 0.0) {
             std::vector<int> nn_indices;
             std::vector<double> dist;
-            int nb_neighbors = kdtree_.SearchRadius(points[i], non_max_radius_,
-                                                    nn_indices, dist);
+            int nb_neighbors = kdtree.SearchRadius(points[i], non_max_radius,
+                                                   nn_indices, dist);
 
-            if (nb_neighbors >= min_neighbors_) {
+            if (nb_neighbors >= min_neighbors) {
                 bool is_max = true;
                 for (const auto& n_idx : nn_indices) {
                     if (third_eigen_values[i] < third_eigen_values[n_idx]) {
