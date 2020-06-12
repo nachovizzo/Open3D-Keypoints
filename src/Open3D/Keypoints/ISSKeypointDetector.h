@@ -5,7 +5,6 @@
 #pragma once
 
 #include <Open3D/Geometry/KDTreeFlann.h>
-#include <Open3D/Geometry/KDTreeSearchParam.h>
 
 #include <memory>
 
@@ -16,28 +15,38 @@ namespace keypoints {
 
 class ISSKeypointDetector {
 public:
+    explicit ISSKeypointDetector(
+            const std::shared_ptr<geometry::PointCloud>& cloud)
+        : cloud_(cloud), kdtree_(*cloud) {}
+
     /// Function to compute ISS keypoints for a point cloud.
-    std::shared_ptr<geometry::PointCloud> ComputeKeypoints(
-            const geometry::PointCloud& pcd);
+    std::shared_ptr<geometry::PointCloud> ComputeKeypoints();
+
+    /// Compute the model resolution;
+    static double ComputeResolution(const geometry::PointCloud& cloud,
+                                    const geometry::KDTreeFlann& kdtree);
+
+    inline double ModelResolution() const {
+        return ComputeResolution(*cloud_, kdtree_);
+    }
 
 protected:
     /// Helper function to compute the scatter matrix for a a point in the input
     /// pointcloud
-    Eigen::Matrix3d ComputeScatterMatrix(const Eigen::Vector3d& p,
-                                         const geometry::PointCloud& pcd) const;
-
-    /// Compute the model resolution;
-    void ComputeResolution(const geometry::PointCloud& cloud);
+    Eigen::Matrix3d ComputeScatterMatrix(const Eigen::Vector3d& p) const;
 
 public:
+    /// Input PointCloud where to extract the keypoints
+    std::shared_ptr<geometry::PointCloud> cloud_;
+
     /// KDTree to accelerate nearest neighbour searches
     geometry::KDTreeFlann kdtree_;
 
-    /// The model resolution, to be computed by the method
-    double resolution_ = 0.0;
     /// The radius of the spherical neighborhood used to compute the scatter
     /// matrix
     double salient_radius_ = 0.0;
+    /// The non maxima suppression radius.
+    double non_max_radius_ = 0.0;
     /// The upper bound on the ratio between the second and the first
     /// eigenvalue returned by the EVD.
     double gamma_21_ = 0.975;

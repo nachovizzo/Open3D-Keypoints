@@ -43,8 +43,11 @@ int main(int argc, char *argv[]) {
     }
 
     cloud->EstimateNormals();
-    keypoints::ISSKeypointDetector detector;
-    auto iss_keypoints = detector.ComputeKeypoints(*cloud);
+    keypoints::ISSKeypointDetector detector(cloud);
+    double resolution = detector.ModelResolution();
+    detector.salient_radius_ = 6 * resolution;
+    detector.non_max_radius_ = 4 * resolution;
+    auto iss_keypoints = detector.ComputeKeypoints();
     utility::LogInfo("Detected {} keypoints", iss_keypoints->points_.size());
 
     // Visualize the results
