@@ -41,16 +41,14 @@ int main(int argc, char *argv[]) {
         utility::LogError("Options {} not supported\n", option);
     }
 
+    /* if (argc == 3) { */
+    /*     utility::LogInfo("Using default parameters"); */
+    /* } else { */
+    /*     detector.salient_radius_ = std::strtod(argv[3], 0); */
+    /*     detector.non_max_radius_ = std::strtod(argv[4], 0); */
+    /* } */
+
     keypoints::ISSKeypointDetector detector(cloud);
-    if (argc == 3) {
-        utility::LogInfo("Using default parameters");
-        double resolution = detector.ModelResolution();
-        detector.salient_radius_ = 6 * resolution;
-        detector.non_max_radius_ = 4 * resolution;
-    } else {
-        detector.salient_radius_ = std::strtod(argv[3], 0);
-        detector.non_max_radius_ = std::strtod(argv[4], 0);
-    }
     utility::LogDebug("salient_radius = {}, non_max_radius = {}",
                       detector.salient_radius_, detector.non_max_radius_);
 
