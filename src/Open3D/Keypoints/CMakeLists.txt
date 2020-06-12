@@ -1,1 +1,1 @@
-add_library(Keypoints OBJECT ISSKeypointDetector.cpp)
+add_library(Keypoints OBJECT ISSDetector.cpp)

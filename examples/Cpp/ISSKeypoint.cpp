@@ -3,7 +3,7 @@
 //
 // Copyright (c) 2020 Ignacio Vizzo, all rights reserved
 
-#include <Open3D/Keypoints/ISSKeypointDetector.h>
+#include <Open3D/Keypoints/ISSDetector.h>
 #include <Open3D/Open3D.h>
 
 #include <Eigen/Core>
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     }
     {
         utility::ScopeTimer timer("[class] ISS Keypoints estimation");
-        keypoints::ISSKeypointDetector detector(cloud);
+        keypoints::ISSDetector detector(cloud);
         detector.gamma_21_ = 0.975;
         auto c_iss_keypoints = detector.ComputeKeypoints();
         utility::LogInfo("Detected {} keypoints",

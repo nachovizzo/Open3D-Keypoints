@@ -3,7 +3,7 @@
 //
 // Copyright (c) 2020 Ignacio Vizzo, all rights reserved
 
-#include "Open3D/Keypoints/ISSKeypointDetector.h"
+#include "Open3D/Keypoints/ISSDetector.h"
 #include "open3d_pybind/docstring.h"
 #include "open3d_pybind/keypoints/keypoints.h"
 

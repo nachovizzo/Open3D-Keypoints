@@ -1,8 +1,8 @@
-// @file      ISSKeypointDetector.cpp
+// @file      ISSDetector.cpp
 // @author    Ignacio Vizzo     [ivizzo@uni-bonn.de]
 //
 // Copyright (c) 2020 Ignacio Vizzo, all rights reserved
-#include "Open3D/Keypoints/ISSKeypointDetector.h"
+#include "Open3D/Keypoints/ISSDetector.h"
 
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
@@ -33,7 +33,7 @@ inline bool IsLocalMaxima(int i,
 
 namespace keypoints {
 
-double ISSKeypointDetector::ComputeModelResolution() const {
+double ISSDetector::ComputeModelResolution() const {
     std::vector<int> indices(2);
     std::vector<double> distances(2);
     double resolution = 0.0;
@@ -47,7 +47,7 @@ double ISSKeypointDetector::ComputeModelResolution() const {
     return resolution;
 }
 
-Eigen::Matrix3d ISSKeypointDetector::ComputeScatterMatrix(
+Eigen::Matrix3d ISSDetector::ComputeScatterMatrix(
         const Eigen::Vector3d& p) const {
     std::vector<int> indices;
     std::vector<double> dist;
@@ -71,7 +71,7 @@ Eigen::Matrix3d ISSKeypointDetector::ComputeScatterMatrix(
     return cov;
 }
 
-std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints() {
+std::shared_ptr<geometry::PointCloud> ISSDetector::ComputeKeypoints() {
     const auto& points = cloud_->points_;
     std::vector<double> third_eigen_values(points.size());
 #pragma omp parallel for shared(third_eigen_values)
@@ -115,7 +115,7 @@ std::shared_ptr<geometry::PointCloud> ComputeISSKeypoints(
         const std::shared_ptr<geometry::PointCloud>& input,
         double salient_radius /* = 0.0 */,
         double non_max_radius /* = 0.0 */) {
-    ISSKeypointDetector detector(input, salient_radius, non_max_radius);
+    ISSDetector detector(input, salient_radius, non_max_radius);
     return detector.ComputeKeypoints();
 }
 

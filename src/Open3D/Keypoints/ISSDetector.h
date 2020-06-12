@@ -1,4 +1,4 @@
-// @file      ISSKeypointDetector.h
+// @file      ISSDetector.h
 // @author    Ignacio Vizzo     [ivizzo@uni-bonn.de]
 //
 // Copyright (c) 2020 Ignacio Vizzo, all rights reserved
@@ -13,12 +13,11 @@
 namespace open3d {
 namespace keypoints {
 
-class ISSKeypointDetector {
+class ISSDetector {
 public:
-    explicit ISSKeypointDetector(
-            const std::shared_ptr<geometry::PointCloud>& cloud,
-            double salient_radius = 0.0,
-            double non_max_radius = 0.0)
+    explicit ISSDetector(const std::shared_ptr<geometry::PointCloud>& cloud,
+                         double salient_radius = 0.0,
+                         double non_max_radius = 0.0)
         : cloud_(cloud),
           kdtree_(*cloud),
           salient_radius_(salient_radius),
