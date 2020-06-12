@@ -42,29 +42,25 @@ int main(int argc, char *argv[]) {
     }
 
     cloud->EstimateNormals();
-    double salient_radius = 0.0;
-    double non_max_radius = 0.0;
-    auto iss_keypoints = std::make_shared<geometry::PointCloud>();
+    keypoints::ISSKeypointDetector detector(cloud);
     if (argc == 3) {
         utility::LogInfo("Using default parameters");
-        geometry::KDTreeFlann kdtree(*cloud);
-        const double resolution = keypoints::ComputeResolution(*cloud, kdtree);
-        salient_radius = 6 * resolution;
-        non_max_radius = 4 * resolution;
+        double resolution = detector.ModelResolution();
+        detector.salient_radius_ = 6 * resolution;
+        detector.non_max_radius_ = 4 * resolution;
     } else {
-        salient_radius = std::strtod(argv[3], 0);
-        non_max_radius = std::strtod(argv[4], 0);
+        detector.salient_radius_ = std::strtod(argv[3], 0);
+        detector.non_max_radius_ = std::strtod(argv[4], 0);
     }
-
     // Compute the ISS Keypoints
+
+    auto iss_keypoints = std::make_shared<geometry::PointCloud>();
     {
         utility::ScopeTimer timer("ISS estimation");
-        iss_keypoints = keypoints::ComputeISSKeypoints(*cloud, salient_radius,
-                                                       non_max_radius);
+        iss_keypoints = detector.ComputeKeypoints();
         utility::LogInfo("Detected {} keypoints",
                          iss_keypoints->points_.size());
     }
-
     // Visualize the results
     cloud->PaintUniformColor(Eigen::Vector3d(0.5, 0.5, 0.5));
     iss_keypoints->PaintUniformColor(Eigen::Vector3d(1.0, 0.75, 0.0));
