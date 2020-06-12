@@ -41,24 +41,20 @@ int main(int argc, char *argv[]) {
         utility::LogError("Options {} not supported\n", option);
     }
 
-    keypoints::ISSKeypointDetector detector(cloud);
     if (argc == 3) {
         utility::LogInfo("Using default parameters");
-        double resolution = detector.ModelResolution();
-        detector.salient_radius_ = 6 * resolution;
-        detector.non_max_radius_ = 4 * resolution;
     } else {
-        detector.salient_radius_ = std::strtod(argv[3], 0);
-        detector.non_max_radius_ = std::strtod(argv[4], 0);
+        double salient_radius = std::strtod(argv[3], 0);
+        double non_max_radius = std::strtod(argv[4], 0);
+        utility::LogDebug("salient_radius = {}, non_max_radius = {}",
+                          salient_radius, non_max_radius);
     }
-    utility::LogDebug("salient_radius = {}, non_max_radius = {}",
-                      detector.salient_radius_, detector.non_max_radius_);
 
     // Compute the ISS Keypoints
     auto iss_keypoints = std::make_shared<geometry::PointCloud>();
     {
         utility::ScopeTimer timer("ISS estimation");
-        iss_keypoints = detector.ComputeKeypoints();
+        iss_keypoints = keypoints::ComputeISSKeypoints(cloud);
         utility::LogInfo("Detected {} keypoints",
                          iss_keypoints->points_.size());
     }

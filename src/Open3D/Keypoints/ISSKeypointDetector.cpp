@@ -19,8 +19,8 @@ namespace open3d {
 namespace {
 
 inline bool IsLocalMaxima(int i,
-                   const std::vector<int>& nn_indices,
-                   const std::vector<double>& third_eigen_values) {
+                          const std::vector<int>& nn_indices,
+                          const std::vector<double>& third_eigen_values) {
     bool is_max = true;
     for (const auto& n_idx : nn_indices) {
         if (third_eigen_values[i] < third_eigen_values[n_idx]) {
@@ -33,19 +33,17 @@ inline bool IsLocalMaxima(int i,
 
 namespace keypoints {
 
-double ISSKeypointDetector::ComputeResolution(
-        const geometry::PointCloud& cloud,
-        const geometry::KDTreeFlann& kdtree) {
+double ISSKeypointDetector::ComputeModelResolution() const {
     std::vector<int> indices(2);
     std::vector<double> distances(2);
     double resolution = 0.0;
 #pragma omp parallel for reduction(+ : resolution)
-    for (size_t i = 0; i < cloud.points_.size(); i++) {
-        if (kdtree.SearchKNN(cloud.points_[i], 2, indices, distances) != 0) {
+    for (size_t i = 0; i < cloud_->points_.size(); i++) {
+        if (kdtree_.SearchKNN(cloud_->points_[i], 2, indices, distances) != 0) {
             resolution += std::sqrt(distances[1]);
         }
     }
-    resolution /= cloud.points_.size();
+    resolution /= cloud_->points_.size();
     return resolution;
 }
 
@@ -72,6 +70,7 @@ Eigen::Matrix3d ISSKeypointDetector::ComputeScatterMatrix(
     }
     return cov;
 }
+
 std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints() {
     const auto& points = cloud_->points_;
     std::vector<double> third_eigen_values(points.size());
@@ -111,6 +110,5 @@ std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints() {
 
     return std::make_shared<geometry::PointCloud>(keypoints);
 }
-
 }  // namespace keypoints
 }  // namespace open3d
