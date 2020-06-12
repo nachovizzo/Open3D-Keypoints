@@ -55,10 +55,10 @@ int main(int argc, char *argv[]) {
     iss_keypoints->PaintUniformColor(Eigen::Vector3d(1.0, 0.75, 0.0));
     if (option == "mesh") {
         mesh->PaintUniformColor(Eigen::Vector3d(0.5, 0.5, 0.5));
-        visualization::DrawGeometries({mesh, iss_keypoints}, "ISS", 1600, 900);
-    } else {
         mesh->ComputeVertexNormals();
         mesh->ComputeTriangleNormals();
+        visualization::DrawGeometries({mesh, iss_keypoints}, "ISS", 1600, 900);
+    } else {
         visualization::DrawGeometries({iss_keypoints}, "ISS", 1600, 900);
     }
 
