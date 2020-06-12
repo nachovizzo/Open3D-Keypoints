@@ -30,7 +30,7 @@ public:
     }
 
     /// Function to compute ISS keypoints for a point cloud.
-    std::shared_ptr<geometry::PointCloud> ComputeKeypoints();
+    std::shared_ptr<geometry::PointCloud> ComputeKeypoints() const;
 
 protected:
     /// Helper function to compute the scatter matrix for a a point in the input

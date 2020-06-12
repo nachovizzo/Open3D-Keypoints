@@ -71,7 +71,7 @@ Eigen::Matrix3d ISSDetector::ComputeScatterMatrix(
     return cov;
 }
 
-std::shared_ptr<geometry::PointCloud> ISSDetector::ComputeKeypoints() {
+std::shared_ptr<geometry::PointCloud> ISSDetector::ComputeKeypoints() const {
     const auto& points = cloud_->points_;
     std::vector<double> third_eigen_values(points.size());
 #pragma omp parallel for shared(third_eigen_values)
