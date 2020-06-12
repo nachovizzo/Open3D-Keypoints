@@ -15,6 +15,22 @@
 #include "Open3D/Utility/Console.h"
 
 namespace open3d {
+
+namespace {
+
+inline bool IsLocalMaxima(int i,
+                   const std::vector<int>& nn_indices,
+                   const std::vector<double>& third_eigen_values) {
+    bool is_max = true;
+    for (const auto& n_idx : nn_indices) {
+        if (third_eigen_values[i] < third_eigen_values[n_idx]) {
+            is_max = false;
+        }
+    }
+    return is_max;
+}
+}  // namespace
+
 namespace keypoints {
 
 double ISSKeypointDetector::ComputeResolution(
@@ -56,7 +72,6 @@ Eigen::Matrix3d ISSKeypointDetector::ComputeScatterMatrix(
     }
     return cov;
 }
-
 std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints() {
     const auto& points = cloud_->points_;
     std::vector<double> third_eigen_values(points.size());
@@ -87,16 +102,9 @@ std::shared_ptr<geometry::PointCloud> ISSKeypointDetector::ComputeKeypoints() {
             int nb_neighbors = kdtree_.SearchRadius(points[i], non_max_radius_,
                                                     nn_indices, dist);
 
-            if (nb_neighbors >= min_neighbors_) {
-                bool is_max = true;
-                for (const auto& n_idx : nn_indices) {
-                    if (third_eigen_values[i] < third_eigen_values[n_idx]) {
-                        is_max = false;
-                    }
-                }
-                if (is_max) {
-                    keypoints.emplace_back(points[i]);
-                }
+            if (nb_neighbors >= min_neighbors_ &&
+                IsLocalMaxima(i, nn_indices, third_eigen_values)) {
+                keypoints.emplace_back(points[i]);
             }
         }
     }
